@@ -9,6 +9,8 @@ import time
 from random import choice
 # importando bibliteca randint
 from random import randint
+#
+import re
 
 
 
@@ -136,38 +138,52 @@ def leitorPaginaProduto(url):
         # Criando o objeto soup para consultar informações dentro da pagina
         soup = BeautifulSoup(response.text, 'lxml')
 
-
-        # Pegando o titulo do produto
+        # Pegando o título do produto
         title_element = soup.select_one('#productTitle')
         titulo = title_element.text.strip() if title_element else None
 
-
         # Pegando a nota do produto
         avaliacao_elemento = soup.select_one('#acrPopover')
-        avaliacao_texto = avaliacao_elemento.attrs.get('title') if avaliacao_elemento else None # Pegando a informação do atributo 'title'
-        avaliacao = avaliacao_texto.replace(' de 5 estrelas', '') if avaliacao_texto else None # usando o método replace para armazenar somento o número
+        avaliacao_texto = avaliacao_elemento.attrs.get('title') if avaliacao_elemento else None
+        avaliacao_valor = avaliacao_texto.replace(' de 5 estrelas', '') if avaliacao_texto else None
+        avaliacao = float(avaliacao_valor.replace(',', '.'))
+
 
         # Pegando a quantidade de avaliações
         quantidadeAvaliacoes_elemento = soup.select_one('#acrCustomerReviewText')
         quantidadeAvaliacoes_text = quantidadeAvaliacoes_elemento.text.strip() if quantidadeAvaliacoes_elemento else None
-        quantidadeAvaliacoes = quantidadeAvaliacoes_text.replace(' avaliações de clientes', '') if quantidadeAvaliacoes_text else None
+        quantidadeAvaliacoes_valor = quantidadeAvaliacoes_text.replace(' avaliações de clientes', '') if quantidadeAvaliacoes_text else None
+        quantidadeAvaliacoes = float(quantidadeAvaliacoes_valor)
 
         # Pegando o preço
-        preco_elemento = soup.select_one('span.a-price.a-text-normal.aok-align-center.reinventPriceAccordionT2').select_one('span.a-offscreen')
-        preco = preco_elemento.text if preco_elemento else None
+        preco_whole_elemento = soup.select_one('div.a-section.a-spacing-none span.a-price-whole')
+        #preco_whole_elemento2 = soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-whole")
+        preco_whole = preco_whole_elemento.text.strip().replace(',', '.')
+        preco_fraction_elemento = soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-fraction")
+        preco_fraction = preco_fraction_elemento.text.strip()
+        preco_text = preco_whole + preco_fraction
+        preco = float(preco_text)
 
-        # Pegando a imagem
-        imagem_elemento = soup.select_one('#landingImage')
-            #print(imagem_elemento)
-        imagem = imagem_elemento.attrs.get('scr')
+        
+        # Pegando a quantidade de vendas no mês
+        #vendasMes_elemento = soup.find('span', id='social-proofing-faceout-title-tk_bought').find('span', class_='a-text-bold selectorgadget_selected')
+        vendasMes_elemento = soup.find('span', id='social-proofing-faceout-title-tk_bought').find('span')
+        vendasMes_text = vendasMes_elemento.text
+        inteiros = re.findall(r'\d+', vendasMes_text)
+        inteiros = list(map(int, inteiros))
+        vendasMes = inteiros[0]
+        if 'mil' in vendasMes_text:
+            vendasMes = vendasMes * 1000
+        
 
         return {
             'titulo': titulo,
             'avaliacao': avaliacao,
             'quantidadeAvaliacoes': quantidadeAvaliacoes,
             'preco': preco,
-            'imagem': imagem
+            'vendasMes': vendasMes
         }
+
 
     except Exception as e:
         print(e)
@@ -175,6 +191,7 @@ def leitorPaginaProduto(url):
 # Função principal
 def main():
 
+    """
     # Nome do arquivo CSV de saída
     arquivo_csv = 'dados.csv'
 
@@ -204,7 +221,9 @@ def main():
             # Escrever as linhas de dados
             for row in data:
                 writer.writerow(row) if row else 'N/a'
-        
+    """
+
+    print(leitorPaginaProduto('https://www.amazon.com.br/Shampoo-Anticaspa-Clear-Cool-Menthol/dp/B07LFGWRC7/ref=sr_1_1?dib=eyJ2IjoiMSJ9.0uJFCQV7Rq4Yk7pOhLehFNgzZz8xADjvZMMlO0-33ItRoSp81jKWW2HSKPFuGW45s4aWZCKLeiGLw0I5AwWJGhhCEygWg1_Jpewy8RyBOu3r3dhhn4ZODP6wQ2NWQbhI3dgdJwT9BtHjktRJTGCmFYl2twcp7M1IVfTrKI_U1JgQZYTBjNKfiNUBR3jDFd_XtroBgLveMEr-TM0HCiqP9YVkzvaymZgjX-DZsF5rpYIDhjfcfhoovhqszFlm8GAdmV_BdKQaikzwMXL_Dy3OESoj-aywLd2NdBCdph5T9RU.HzuT9aUTlHchkcRoFsp6rujiZfSqhZ63vSS91Xl94ms&dib_tag=se&qid=1728043769&refinements=p_n_condition-type%3A13862762011&rnid=13862761011&s=beauty&sr=1-1'))
 
     
 # Chamando a função principal
