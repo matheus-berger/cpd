@@ -31,7 +31,7 @@
 
     - Vá para o diretorio memoria interna:
         no terminal: cd../memoriaInterna
-    - Acesse o arquivo mergeSortExterno.py
-    - Localize a função def main()
-    - Atualize os campos de endereço de memoria e os paramentros da função conforme necessario
-    - Execute o programa
+    - Acesse o arquivo mergeSortExterno.py;
+    - Localize a função def main();
+    - Atualize os campos de endereço de memoria e os paramentros da função conforme necessario;
+    - Execute o programa.
