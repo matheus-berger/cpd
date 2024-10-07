@@ -1,11 +1,11 @@
 # Passos para a utilização do programa
 
 1. Entre no diretorio do crawler
-    - No terminal
+    - No terminal:
         cd bs_amazon
 
 2. Ative o ambiente virtual
-    - No terminal
+    - No terminal:
         .env/scripts/activate
 
 3. Amarmazenar Catalogos:
