@@ -1,4 +1,4 @@
-Passos para a utilização do programa
+# Passos para a utilização do programa
 
 1. Entre no diretorio do crawler
     - No terminal
