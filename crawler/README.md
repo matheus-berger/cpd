@@ -4,9 +4,7 @@
     - No terminal:
         cd bs_amazon
 
-2. Ative o ambiente virtual
-    - No terminal:
-        .env/scripts/activate
+2. Crie um ambiente virtual, o ative e baixe o framework BeautifulSoup dentro dele.
 
 3. Amarmazenar Catalogos:
     -> Esse processo irá gerar um arquivo denominado 'catalgos.csv', onde ficara a lista de links de catalogos onde estão os produtos desejados para analise.
