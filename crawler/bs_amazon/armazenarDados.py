@@ -10,6 +10,8 @@ from random import choice
 from random import randint
 # csv
 import csv
+# re
+import re
 
 
 
@@ -73,56 +75,71 @@ def leitorDadosProdutos(url, num_produto):
     response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
     
     while response.status_code != 200 :
-        segundos = randint(1, 3)
-        print("print_status_pagina: ", response.status_code)
-        time.sleep(segundos)
-        response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy()})
-
-
-    # Printando o resultado da requisição bem sucedida
-    print(f"{num_produto}ª pagina de produto acessada com sucesso: {response.status_code}")
+        response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
 
     
     try:
 
-        time.sleep(3)
+        # Criando o objeto soup para consultar informações dentro da pagina
+        soup = BeautifulSoup(response.text, 'lxml')
 
         # Criando o objeto soup para consultar informações dentro da pagina
         soup = BeautifulSoup(response.text, 'lxml')
 
-        time.sleep(3)
-
-
-        # Pegando o titulo do produto
+        # Pegando o título do produto
         title_element = soup.select_one('#productTitle')
         titulo = title_element.text.strip() if title_element else None
 
-
         # Pegando a nota do produto
         avaliacao_elemento = soup.select_one('#acrPopover')
-        avaliacao_texto = avaliacao_elemento.attrs.get('title') if avaliacao_elemento else None # Pegando a informação do atributo 'title'
-        avaliacao = avaliacao_texto.replace(' de 5 estrelas', '') if avaliacao_texto else None # usando o método replace para armazenar somento o número
+        avaliacao_texto = avaliacao_elemento.attrs.get('title') if avaliacao_elemento else None
+        avaliacao_valor = avaliacao_texto.replace(' de 5 estrelas', '') if avaliacao_texto else None
+        avaliacao = float(avaliacao_valor.replace(',', '.'))
+
 
         # Pegando a quantidade de avaliações
         quantidadeAvaliacoes_elemento = soup.select_one('#acrCustomerReviewText')
         quantidadeAvaliacoes_text = quantidadeAvaliacoes_elemento.text.strip() if quantidadeAvaliacoes_elemento else None
-        quantidadeAvaliacoes = quantidadeAvaliacoes_text.replace(' avaliações de clientes', '') if quantidadeAvaliacoes_text else None
+        quantidadeAvaliacoes_valor = quantidadeAvaliacoes_text.replace(' avaliações de clientes', '') if quantidadeAvaliacoes_text else None
+        quantidadeAvaliacoes = float(quantidadeAvaliacoes_valor)
 
         # Pegando o preço
-        preco_elemento = soup.select_one('span.a-price.a-text-normal.aok-align-center.reinventPriceAccordionT2').select_one('span.a-offscreen')
-        preco = preco_elemento.text if preco_elemento else None
+        preco_whole_elemento = soup.select_one('div.a-section.a-spacing-none span.a-price-whole')
+        #preco_whole_elemento2 = soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-whole")
+        preco_whole = preco_whole_elemento.text.strip().replace(',', '.')
+        preco_fraction_elemento = soup.select_one("#corePriceDisplay_desktop_feature_div .a-price-fraction")
+        preco_fraction = preco_fraction_elemento.text.strip()
+        preco_text = preco_whole + preco_fraction
+        preco = float(preco_text)
 
-        # Pegando a imagem
-        imagem_elemento = soup.select_one('#landingImage')
-            #print(imagem_elemento)
-        imagem = imagem_elemento.attrs.get('scr')
+        
+        # Pegando a quantidade de vendas no mês
+        #vendasMes_elemento = soup.find('span', id='social-proofing-faceout-title-tk_bought').find('span', class_='a-text-bold selectorgadget_selected')
+        vendasMes_elemento = soup.find('span', id='social-proofing-faceout-title-tk_bought').find('span')
+        vendasMes_text = vendasMes_elemento.text
+        inteiros = re.findall(r'\d+', vendasMes_text)
+        inteiros = list(map(int, inteiros))
+        vendasMes = inteiros[0]
+        if 'mil' in vendasMes_text:
+            vendasMes = vendasMes * 1000
+        
+        # Custo beneficio
+        custoBeneficio = None
+        if preco and avaliacao not in (None, ' ', ''):
+            custoBeneficio = preco / avaliacao
 
-        return [imagem, titulo, avaliacao, quantidadeAvaliacoes, preco]
+        # Popularidade ajustada
+        popularidadeAjustada = None
+        if quantidadeAvaliacoes and avaliacao not in (None, ' ', ''):
+            popularidadeAjustada = (quantidadeAvaliacoes * avaliacao) / 5 
+
+        # Retornando lista com os dados
+        return [titulo, avaliacao, quantidadeAvaliacoes, preco, vendasMes, custoBeneficio, popularidadeAjustada]
 
     except Exception as e:
-        print(e)
+        pass
+        
             
-    
 # Função principal
 def main():
 
@@ -131,26 +148,31 @@ def main():
     # abrindo o arquivo dos catalogos e acessando seus links
     with open('produtos.csv', 'r') as arquivo:
       leitor = csv.reader(arquivo)
+      
+      # Acessando cada linha do arquivo
       for linha in leitor:
-          link = str(linha[0]).strip()
-          contador = contador + 1
-          dados = leitorDadosProdutos(link, contador)
-          print(dados)
+        link = str(linha[0]).strip()
+        contador = contador + 1
+        dados = leitorDadosProdutos(link, contador)
           
-          if dados is not None: 
-            # abrindo e escrevendo os dados no arquivo de dados
-            with open('../memoriaExterna/dados.csv', 'a', newline='') as arquivoDados:
-                escritor = csv.writer(arquivoDados)
-                escritor.writerow(dados)
-              
-          # tempo de espera para os aqruivos serem salvos de forma correta    
-          time.sleep(3)
-        
-          #
-          if contador == 10:
-              break
-              
-    
-    
+        # Escrevendo os dados se não for nulo  
+        tentativas = 1
+        while dados is None and tentativas <= 100:
+            time.sleep(randint(1, 3))
+            dados = leitorDadosProdutos(link, contador)
+            tentativas = tentativas + 1
+        if tentativas == 101:
+            print(f"[ :( ] Não foi possivel acessar os dados do {contador}º produto! (Status do Prodututo: {dados})")
+        else:
+            # Vendo se os dados que foram armazenados de forma correta
+            if dados[0] and dados[5] and dados[6] not in (None, ' ', ''):
+                # Abrindo e escrevendo os dados no arquivo de dados
+                with open('../memoriaExterna/dados.csv', 'a', newline='') as arquivoDados:
+                    escritor = csv.writer(arquivoDados)
+                    escritor.writerow(dados)
+                    print(f"[ :D ] Dados do {contador}º produto salvos com sucesso!\n")
+            else:
+                print(f"[ :( ] Não foi possivel salvar os dados do {contador}º produto! (Dados Incompletos)") 
+
 # Chamando a função principal
 main()

@@ -74,10 +74,7 @@ def leitorLinkProdutos(url, num_pagina):
     response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
     
     while response.status_code != 200 :
-        segundos = randint(1, 3)
-        print("print_status_pagina: ", response.status_code)
-        time.sleep(segundos)
-        response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy()})
+        response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
 
 
     # Printando o resultado da requisição bem sucedida
@@ -92,6 +89,7 @@ def leitorLinkProdutos(url, num_pagina):
     # Variavel para armazenar os links de produtos da pagina categoria
     link_elementos = soup.select("[data-asin] h2 a")
 
+    contador_produto = 1
     # Abrir um arquivo CSV para escrita
     with open('produtos.csv', 'a', newline='') as csvfile:
         # Criar um objeto escritor
@@ -101,8 +99,8 @@ def leitorLinkProdutos(url, num_pagina):
         for link in link_elementos:
             link_completo = str('https://www.amazon.com.br' + link.attrs.get("href"))
             escritor.writerow([link_completo])
-            
-
+            print(f"{contador_produto}º armazenado!")
+            contador_produto = contador_produto + 1
 
     
 # Função principal

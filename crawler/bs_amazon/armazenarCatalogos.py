@@ -59,10 +59,7 @@ def get_user_agent():
     return choice(user_agents_list)
 
 
-# Função para ler as paginas de categoria
-def leitorPaginaCategoria(url, contador_paginas):
-
-
+def leitorPaginaCategoria(url_inicial, quantidade_paginas):
     # Cabeçalho customizado para utilizar na requisição, para o sistema do site da amazon reconhecer a requisisção como vindo de um navegador
     custom_headers = {
         "User-Agent": get_user_agent(),
@@ -71,59 +68,59 @@ def leitorPaginaCategoria(url, contador_paginas):
         "Connection": "keep-alive",
         "Upgrade-Insecure-Requests": "1"
     }
-    
 
-    # Variável que armazena a resposta da requisição
-    response = requests.get(url, headers=custom_headers)
-    
-    while response.status_code != 200 :
-        segundos = randint(1, 3)
-        print("print_status_pagina: ", response.status_code)
-        time.sleep(segundos)
-        response = requests.get(url, headers=custom_headers)
+    # Abrir o arquivo CSV em modo append no início da função
+    with open('catalogos.csv', 'a', newline='') as csvfile:
+        escritor = csv.writer(csvfile)
 
-
-    # Printando o resultado da requisição bem sucedida
-    if contador_paginas > 1:
-        print(f"{contador_paginas}ª pagina acessada com sucesso: {response.status_code}")
-    else:
-        print(f"Pagina inicial acessada com sucesso: {response.status_code}")
+        url = url_inicial
+        contador = 1
+        while contador < quantidade_paginas+1:
+            
+            # Variável que armazena a resposta da requisição
+            response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
+            
+            # Tratamento de erros e impressão de status
+            while response.status_code != 200 :
+                response = requests.get(url, headers=custom_headers, proxies={"http": get_proxy(), "http": get_proxy(), "http": get_proxy()})
 
 
-    # Criando o objeto soup para consultar informações dentro da pagina
-    soup = BeautifulSoup(response.text, 'lxml')
+            # Printando o resultado da requisição bem sucedida
+            if contador > 1:
+                print(f"{contador}ª pagina acessada com sucesso: {response.status_code}")
+            else:
+                print(f"Pagina inicial acessada com sucesso: {response.status_code}")
 
-    # Adicionando a url da pagina atual no aquivo csv
-    arquivo_csv = open('catalogos.csv', 'w')
-    escritor = csv.writer(arquivo_csv)
-    escritor.writerow([url])
-    arquivo_csv.close()
+            soup = BeautifulSoup(response.text, 'lxml')
 
-    # Variavel para a proxima pagina
-    proxima_pagina = soup.search.select_one('a:contains("Próximo")')
-    if proxima_pagina:
-        _url = proxima_pagina.attrs.get('href')
-        proxima_url = str("https://www.amazon.com.br" + _url)
+            # Escrever a URL no arquivo CSV
+            escritor.writerow([url])
 
-    # Armazena 10 links de paginas de categoria
-    while contador_paginas <= 10:
-        contador = contador_paginas + 1
-        leitorPaginaCategoria(proxima_url, contador)
+            # Encontrar o próximo link de forma mais específica
+            if soup:
+                proxima_pagina = soup.select_one('a.s-pagination-item.s-pagination-next')
+                if proxima_pagina:
+                    url = str("https://www.amazon.com.br" + proxima_pagina['href'])
+                    print('o proximo link é: ', url)
+                else:
+                    print("Fim das páginas")
+                    break
 
-
-    
+                contador += 1
+                time.sleep(randint(1, 3))
+            else:
+                print("Erro ao carregar a página")
+                return
+            
+  
 # Função principal
 def main():
 
-
     url_inicial = 'https://www.amazon.com.br/s?bbn=16194414011&rh=n%3A16194414011%2Cp_n_condition-type%3A13862762011&dc&qid=1728035420&rnid=13862761011&ref=lp_16194415011_nr_p_n_condition-type_0'
                    
-    quantidade_paginas = 1
+    leitorPaginaCategoria(url_inicial, 10)
 
-    leitorPaginaCategoria(url_inicial, quantidade_paginas)
 
-    
-    
 # Chamando a função principal
 main()
 
