@@ -1,24 +1,54 @@
+"""
+    01. Implemente uma hash table utilizando dicionários em Python:
+        a. versão onde cada chave do dicińario refere-se a um vetor simples:
+            htable = {key1: [], key2: []}
+"""
 
 # Classe node que representa cada chave
 class Node:
-    def __init__(self, dado):
-        self.chave = dado
-        self.dado = dado 
+    def __init__(self, dado, chave):
+        self.dado = dado
+        self.chave = chave 
 
 # Classe para a tabela de endereços direto
 class Table:
     def __init__(self, tamanho):
         self.tamanho = tamanho
-        self.lista_espaços = [None] * (tamanho + 1) # Criando uma array de tamanho fixo
+        self.lista_espaços = {} # Dicionario com os espaços para serem armazenados
+        for i in range(0, tamanho):
+            self.lista_espaços[i] = []
+    
 
-    def inserir_direto(self, node):
-        self.lista_espaços[node.chave] = node
+    def function_hash(self, dado):
+        return dado % self.tamanho
+
+    def inserir(self, dado):
+        chave = self.function_hash(dado)
+        node = Node(dado, chave)
+        self.lista_espaços[node.chave].append(node)
     
-    def retornar_direto(self, chave):
-        return self.lista_espaços[chave]
+    def pesquisar(self, dado):
+        chave = self.function_hash(dado)
+        conteteudo_indice = self.lista_espaços[chave]
+        if len(conteteudo_indice) != 0:
+            for node in conteteudo_indice:
+                if node.dado == dado:
+                    return node
+            return None # Nenhum node com este dado encontrado
+        else:
+            return None # Indice vazio
     
-    def remover_direto(self, chave):
-        self.lista_espaços[chave] = None
+    def remover(self, dado):
+        chave = self.function_hash(dado)
+        conteteudo_indice = self.lista_espaços[chave]
+        if len(conteteudo_indice) != 0:
+            for node in conteteudo_indice:
+                if node.dado == dado:
+                    conteteudo_indice.remove(node)
+                    return 1
+            return None # Nenhum node com este dado encontrado
+        else:
+            return None # Indice vazio
 
 
 # Criando classe Main
@@ -31,7 +61,7 @@ class Main:
         
         # Criando Menu
         while True:
-            print("\n>==== Tabela de Dispersao - Endereçamento Direto ====<")
+            print("\n>==== Tabela de Dispersao - Com Dicionarios ====<")
             print("[ 1 ] - Criar Tabela")
             print("[ 2 ] - Adicionar um Valor")
             print("[ 3 ] - Remover um Valor")
@@ -52,45 +82,30 @@ class Main:
                 print("\n[> ] Adicionar um valor:")
                 if self.table is not None:
                     valor = int(input("Insira o valor: "))
-                    if valor > self.table.tamanho:
-                        print("Valor com chave maior que a tabela! Tente Novamente.")
-                    else:
-                        valor_repetido = self.table.retornar_direto(valor)
-                        if valor_repetido != None: 
-                            print("Um nó com chave de mesmo valor já foi inserido!")
-                        else:
-                            newnode = Node(valor)
-                            self.table.inserir_direto(newnode)
-                            print(f"Nó de chave e valor {newnode.chave} inserido na tabela com sucesso!")
+                    self.table.inserir(valor)
+                    print(f"Nó de chave e valor {valor} inserido na tabela com sucesso!")
                 else:
                     print("Por favor, crie a Tabela antes de inserir um valor!")
             elif opc == 3:  # Remover um valor
                 print("\n[> ] Remoção de um valor:")
                 if self.table is not None:
-                    chave = int(input("Insira a chave do nó que você quer remover: "))
-                    if chave > self.table.tamanho:
-                        print("A chave excede o tamanho da tabela! Tente novamente.")
+                    valor = int(input("Insira o valor do nó que você quer remover: "))
+                    remocao = self.table.remover(valor)
+                    if remocao == 1:
+                        print("Nó removido com sucesso!")
                     else:
-                        remover_node = self.table.retornar_direto(chave)
-                        if remover_node is not None:
-                            self.table.remover_direto(remover_node.chave)
-                            print(f"Nó de chave e valor {chave} removido da Tabela com sucesso!")
-                        else:
-                            print(f"Nenhum nó de chave {chave} encontrado na Tabela!")
+                        print("Valor não encontrado!")
                 else:
                     print("Por favor, crie a Tabela antes de querer remover um valor!")
             elif opc == 4:  # Buscar por Valor
                 print("\n[> ] Busca de Valor:")
                 if self.table is not None: 
-                    chave = int(input("Digite a Valor: "))
-                    if chave > self.table.tamanho:
-                        print("Valor maior que o tamanho da lista, não há chave para ele! Tente Novamente.")
+                    valor = int(input("Digite o Valor: "))
+                    encontrado = self.table.pesquisar(valor)
+                    if encontrado == None:
+                        print("Valor não encontrado!")
                     else:
-                        node_encontrado = self.table.retornar_direto(chave)
-                        if node_encontrado is None:
-                            print(f"Nenhum nó de chave {chave} encontrado!")
-                        else:
-                            print(f"Nó de chave {node_encontrado.chave} encontrado!")
+                        print(f"Node de valor {encontrado.dado} encontrado!")
                 else:
                     print("Por favor, crie a Tabela antes de pesquisar um valor!")
             elif opc == 5:  # Fechando o programa
