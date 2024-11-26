@@ -22,7 +22,7 @@ print(tabela_hash)
 # Inserindo valores a tabela_hash
 def insert(s, indice):
 
-print(tabela_hash)
+#print(tabela_hash)
 
 # Armazenando as chaves na tabela_hash
 for s in chaves:
