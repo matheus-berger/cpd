@@ -1,5 +1,4 @@
 """     
-
     Fontes auxiliares:
         1 - Algoritmos - Teoria e Prática: Thomas Cormen
         2 - Python Data Structures and Algorithms: Benjamin Baka
@@ -264,6 +263,7 @@ class Main:
                     break
             else:
                 print("Opção Inválida!")
+
 
 # Ponto de entrada do programa
 if __name__ == "__main__":
